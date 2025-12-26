@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+const API_BASE = import.meta.env.VITE_API_URL;
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import VideoPlayer from './VideoPlayer';
@@ -12,7 +13,7 @@ function VideoCard({ video, onRetry, progress, token }) {
   const [duration, setDuration] = useState(video.durationSeconds || 0);
   const [currentTime, setCurrentTime] = useState(0);
 
-  const streamSrc = useMemo(() => `/api/v1/videos/stream/${video._id}?token=${encodeURIComponent(token)}`, [video._id, token]);
+  const streamSrc = useMemo(() => `${API_BASE}/api/v1/videos/stream/${video._id}?token=${encodeURIComponent(token)}`, [video._id, token]);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -50,7 +51,7 @@ function VideoCard({ video, onRetry, progress, token }) {
   return (
     <div className="card p-4 space-y-4">
       <div className="flex items-start gap-4">
-        <img src={video.thumbnailPath ? `/thumbnails/${video.thumbnailPath.split('\\').pop().split('/').pop()}` : 'https://via.placeholder.com/160x90'} alt={video.title} className="h-24 w-40 rounded object-cover border border-zinc-800 bg-zinc-900" />
+        <img src={video.thumbnailPath ? `${API_BASE}/thumbnails/${video.thumbnailPath.split('\\').pop().split('/').pop()}` : 'https://via.placeholder.com/160x90'} alt={video.title} className="h-24 w-40 rounded object-cover border border-zinc-800 bg-zinc-900" />
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between">
             <div>
@@ -85,7 +86,7 @@ function VideoCard({ video, onRetry, progress, token }) {
           <div className="md:col-span-2 space-y-3">
             <VideoPlayer
               src={streamSrc}
-              poster={video.thumbnailPath ? `/thumbnails/${video.thumbnailPath.split('\\').pop().split('/').pop()}` : undefined}
+              poster={video.thumbnailPath ? `${API_BASE}/thumbnails/${video.thumbnailPath.split('\\').pop().split('/').pop()}` : undefined}
               comments={comments}
               sensitivitySegments={video.sensitivitySegments || []}
               currentTime={currentTime}
