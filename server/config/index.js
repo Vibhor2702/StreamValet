@@ -15,9 +15,10 @@ const envPath = envCandidates.find((p) => fs.existsSync(p));
 if (envPath) {
   dotenv.config({ path: envPath });
 } else {
+  // Only warn if .env is missing, do not fail
   dotenv.config({ path: envCandidates[0] });
   // eslint-disable-next-line no-console
-  console.warn(`WARNING: ${envFile} not found. Checked ${envCandidates.join(', ')}`);
+  console.warn(`WARNING: ${envFile} not found. Checked ${envCandidates.join(', ')}. Using environment variables from Render or process.env.`);
 }
 
 const config = {
