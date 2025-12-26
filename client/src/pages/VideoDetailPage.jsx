@@ -1,0 +1,80 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import VideoPlayer from '../components/VideoPlayer';
+import CommentSidebar from '../components/CommentSidebar';
+
+export default function VideoDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [video, setVideo] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [error, setError] = useState(null);
+  const playerRef = useRef();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const { data: v } = await api.get(`/api/v1/videos`);
+        const found = v.find((vid) => vid._id === id);
+        if (!found) throw new Error('Video not found');
+        setVideo(found);
+        const { data: comms } = await api.get(`/api/v1/comments?videoId=${id}`);
+        setComments(comms);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  const handleAddComment = async (text) => {
+    const timestamp = currentTime;
+    const { data: newComment } = await api.post(`/api/v1/comments`, {
+      videoId: id,
+      text,
+      timestamp,
+    });
+    setComments((prev) => [...prev, newComment]);
+  };
+
+  if (loading) return <div className="p-8 text-zinc-400">Loading...</div>;
+  if (error) return <div className="p-8 text-rose-500">{error}</div>;
+  if (!video) return <div className="p-8 text-zinc-400">Video not found.</div>;
+
+  return (
+    <div className="flex gap-8 min-h-screen bg-zinc-950 text-zinc-200 p-8">
+      {/* Left: Video Player and Info */}
+      <div className="flex-1 max-w-3xl">
+        <button className="mb-4 text-zinc-400 hover:text-zinc-200" onClick={() => navigate(-1)}>&larr; Back to list</button>
+        <VideoPlayer
+          ref={playerRef}
+          src={`/api/v1/videos/stream/${video._id}`}
+          poster={video.thumbnailPath ? `/thumbnails/${video.thumbnailPath}` : '/placeholder.png'}
+          comments={comments}
+          sensitivitySegments={video.sensitivitySegments}
+          currentTime={currentTime}
+          onTimeChange={setCurrentTime}
+          duration={video.durationSeconds}
+        />
+        <div className="mt-6">
+          <h2 className="text-2xl font-bold mb-2">{video.title}</h2>
+          <p className="text-zinc-400 mb-2">{video.description}</p>
+          <div className="flex gap-4 text-sm text-zinc-500">
+            <span>Status: <span className="font-semibold text-zinc-200">{video.processingStatus}</span></span>
+            <span>Uploaded: {new Date(video.createdAt).toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+      {/* Right: Comments */}
+      <div className="w-96">
+        <CommentSidebar comments={comments} onAdd={handleAddComment} currentTime={currentTime} />
+      </div>
+    </div>
+  );
+}
