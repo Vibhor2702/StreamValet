@@ -9,6 +9,9 @@ const adminRoutes = require('./routes/admin.routes');
 const commentRoutes = require('./routes/comment.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const { helmetMiddleware, sanitize, globalLimiter, authLimiter, cors, corsOptions } = require('./middlewares/security');
+const healthRoutes = require('./routes/health.routes');
+// Health check endpoint for uptime monitoring
+app.use('/', healthRoutes);
 
 const app = express();
 
