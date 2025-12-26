@@ -10,10 +10,11 @@ const commentRoutes = require('./routes/comment.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const { helmetMiddleware, sanitize, globalLimiter, authLimiter, cors, corsOptions } = require('./middlewares/security');
 const healthRoutes = require('./routes/health.routes');
-// Health check endpoint for uptime monitoring
-app.use('/', healthRoutes);
+
 
 const app = express();
+// Health check endpoint for uptime monitoring
+app.use('/', healthRoutes);
 
 app.disable('x-powered-by');
 app.use(helmetMiddleware);
