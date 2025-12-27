@@ -38,15 +38,13 @@ router.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
-// List videos for the tenant; admins see all tenant videos, others see their own.
+// List videos for the tenant; all users see all tenant videos for collaboration
 router.get(
   '/',
   auth,
   asyncHandler(async (req, res) => {
+    // All users in a tenant can see all videos in that tenant
     const query = { tenantId: req.user.tenantId };
-    if (req.user.role !== 'admin') {
-      query.owner = req.user.id;
-    }
     const videos = await Video.find(query).sort({ createdAt: -1 });
     res.json(videos);
   })

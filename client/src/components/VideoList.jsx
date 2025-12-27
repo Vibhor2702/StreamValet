@@ -16,8 +16,16 @@ export default function VideoList({ videos, onDelete, loading }) {
     if (onDelete) onDelete(id);
   };
 
-  // Check if user can delete (Admin or Editor only, not Viewer)
-  const canDelete = user && (user.role === 'admin' || user.role === 'editor');
+  // Check if user can delete a specific video
+  const canDeleteVideo = (video) => {
+    if (!user) return false;
+    // Admins can delete any video
+    if (user.role === 'admin') return true;
+    // Editors can only delete their own videos
+    if (user.role === 'editor' && video.owner === user.id) return true;
+    // Viewers cannot delete
+    return false;
+  };
 
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950">
@@ -72,7 +80,7 @@ export default function VideoList({ videos, onDelete, loading }) {
                   >
                     <Eye size={16} /> Watch
                   </button>
-                  {canDelete && (
+                  {canDeleteVideo(video) && (
                     <button
                       className="btn bg-rose-700 text-white hover:bg-rose-600 flex items-center gap-2 font-bold border-2 border-rose-500 shadow-lg"
                       style={{ minWidth: 90 }}
