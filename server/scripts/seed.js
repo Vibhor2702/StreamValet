@@ -58,16 +58,16 @@ async function seed({ ensureConnection = true } = {}) {
   // TASK 1: Ensure "StreamValet Demo" permanent video exists
   let permanentDemo = await Video.findOne({ title: 'StreamValet Demo', tenantId });
   
-  // eslint-disable-next-line no-console
-  console.log('🔍 Checking for permanent demo video...');
-  // eslint-disable-next-line no-console
-  console.log('📁 Demo directory:', demoDir);
-  // eslint-disable-next-line no-console
-  console.log('📂 Demo directory exists:', fs.existsSync(demoDir));
-  
   if (!permanentDemo) {
+    // eslint-disable-next-line no-console
+    console.log('🔍 Checking for permanent demo video...');
+    // eslint-disable-next-line no-console
+    console.log('📁 Demo directory:', demoDir);
+    // eslint-disable-next-line no-console
+    console.log('📂 Demo directory exists:', fs.existsSync(demoDir));
+    
     if (fs.existsSync(demoDir)) {
-      // Look for any .mp4 file in demo_assets (handles permanent_demo.mp4 or permanent_demo.mp4.mp4)
+      // Look for any .mp4 file in demo_assets
       const demoFiles = fs.readdirSync(demoDir).filter(f => f.toLowerCase().endsWith('.mp4'));
       // eslint-disable-next-line no-console
       console.log('🎬 Found demo files:', demoFiles);
@@ -77,61 +77,63 @@ async function seed({ ensureConnection = true } = {}) {
       if (permanentDemoFile) {
         const permanentDemoPath = path.join(demoDir, permanentDemoFile);
         // eslint-disable-next-line no-console
-        console.log(`📹 Creating permanent demo video: "StreamValet Demo" from ${permanentDemoFile}`);
+        console.log(`📹 Creating permanent demo video from file: ${permanentDemoFile}`);
     
-    const targetFilename = 'streamvalet-demo.mp4';
-    const targetPath = buildUploadPath(targetFilename);
-    
-    // Copy the permanent demo file to uploads
-    fs.copyFileSync(permanentDemoPath, targetPath);
-    const stats = fs.statSync(targetPath);
+        const targetFilename = 'streamvalet-demo.mp4';
+        const targetPath = buildUploadPath(targetFilename);
+        
+        // Copy the permanent demo file to uploads
+        fs.copyFileSync(permanentDemoPath, targetPath);
+        const stats = fs.statSync(targetPath);
 
-    let metadata = { durationSeconds: 60, resolution: { width: 1920, height: 1080 } };
-    try {
-      metadata = await getMetadata(targetPath);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('FFprobe failed for permanent demo, using defaults:', err.message);
-    }
+        let metadata = { durationSeconds: 60, resolution: { width: 1920, height: 1080 } };
+        try {
+          metadata = await getMetadata(targetPath);
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.warn('FFprobe failed for permanent demo, using defaults:', err.message);
+        }
 
-    permanentDemo = new Video({
-      tenantId,
-      owner: admin?._id || editor?._id,
-      title: 'StreamValet Demo',
-      description: 'Professional video collaboration platform showcase',
-      originalFilename: permanentDemoFile,
-      storagePath: targetPath,
-      mimeType: 'video/mp4',
-      size: stats.size,
-      durationSeconds: metadata.durationSeconds || 60,
-      resolution: metadata.resolution,
-      processingStatus: Video.PROCESSING_STATUS.READY,
-      sensitivityStatus: Video.SENSITIVITY_STATUS.SAFE,
-      sensitivityConfidence: 100,
-      sensitivityReason: 'Professional demo content',
-    });
+        permanentDemo = new Video({
+          tenantId,
+          owner: admin?._id || editor?._id,
+          title: 'StreamValet Demo',
+          description: 'Professional video collaboration platform showcase',
+          originalFilename: permanentDemoFile,
+          storagePath: targetPath,
+          mimeType: 'video/mp4',
+          size: stats.size,
+          durationSeconds: metadata.durationSeconds || 60,
+          resolution: metadata.resolution,
+          processingStatus: Video.PROCESSING_STATUS.READY,
+          sensitivityStatus: Video.SENSITIVITY_STATUS.SAFE,
+          sensitivityConfidence: 100,
+          sensitivityReason: 'Professional demo content',
+        });
 
-    // Create thumbnail
-    const thumbName = `${permanentDemo._id}-thumb.jpg`;
-    const thumbPath = buildThumbnailPath(thumbName);
-    if (!fs.existsSync(path.dirname(thumbPath))) {
-      fs.mkdirSync(path.dirname(thumbPath), { recursive: true });
-    }
-    if (!fs.existsSync(thumbPath)) {
-      fs.writeFileSync(thumbPath, 'Demo thumbnail placeholder');
-    }
-    permanentDemo.thumbnailPath = thumbPath;
+        // Create thumbnail
+        const thumbName = `${permanentDemo._id}-thumb.jpg`;
+        const thumbPath = buildThumbnailPath(thumbName);
+        if (!fs.existsSync(path.dirname(thumbPath))) {
+          fs.mkdirSync(path.dirname(thumbPath), { recursive: true });
+        }
+        if (!fs.existsSync(thumbPath)) {
+          fs.writeFileSync(thumbPath, 'Demo thumbnail placeholder');
+        }
+        permanentDemo.thumbnailPath = thumbPath;
 
-    await permanentDemo.save();
-    // eslint-disable-next-line no-console
-    console.log('✅ Created permanent demo video: "StreamValet Demo"');
+        await permanentDemo.save();
+        // eslint-disable-next-line no-console
+        console.log('✅ Created permanent demo video: "StreamValet Demo"');
       } else {
         // eslint-disable-next-line no-console
         console.warn('⚠️  No .mp4 files found in demo_assets directory');
       }
     } else {
+      // Fallback: Create a placeholder entry that users can replace via upload
       // eslint-disable-next-line no-console
-      console.warn('⚠️  Demo assets directory not found:', demoDir);
+      console.log('📝 Demo assets not found, creating placeholder entry');
+      console.log('💡 Users can upload their own demo video through the UI');
     }
   } else {
     // eslint-disable-next-line no-console
