@@ -1,9 +1,18 @@
 
 # StreamValet
 
+**Enterprise Video Collaboration Platform with AI-Powered Content Intelligence**
+
 Welcome, Evaluator! 👋
 
-Thank you for taking the time to review StreamValet—a production-grade B2B video management platform built for multi-tenant teams. This project is designed to showcase robust video upload, processing, streaming, and role-based access control, all with a clean, modern UI and a focus on real-world deployment.
+Thank you for taking the time to review StreamValet—a production-grade B2B video management platform built for multi-tenant teams. This project showcases:
+
+- ✅ **Secure Video Upload & Streaming** with HTTP range requests
+- ✅ **Automated Sensitivity Analysis** for content moderation
+- ✅ **Real-Time Processing Updates** via Socket.io
+- ✅ **Role-Based Access Control (RBAC)** with multi-tenant isolation
+- ✅ **Professional Analytics Dashboard** with live metrics
+- ✅ **Responsive Dark Mode UI** built with React + Tailwind
 
 ## 🚀 Quick Demo Access
 
@@ -11,11 +20,49 @@ Thank you for taking the time to review StreamValet—a production-grade B2B vid
 
 1. Visit the deployed app: [https://streamvalet.pages.dev](https://streamvalet.pages.dev)
 2. Use the one-click login buttons (Admin, Editor, Viewer) for instant access to demo accounts:
-  - **Admin:** `admin@pulsegen.io` / `admin123`
-  - **Editor:** `editor@pulsegen.io` / `editor123`
-  - **Viewer:** `viewer@pulsegen.io` / `viewer123`
+  - **Admin:** `admin@pulsegen.io` / `admin123` - Full system access + analytics
+  - **Editor:** `editor@pulsegen.io` / `editor123` - Upload & manage own videos
+  - **Viewer:** `viewer@pulsegen.io` / `viewer123` - Read-only access
 
 You can upload, process, and stream videos, view analytics, and explore all features without any registration.
+
+---
+
+## 🎯 Core Features
+
+### 1. Video Management
+- **Upload Interface:** Drag-and-drop with real-time progress tracking
+- **Secure Storage:** Multer-based file handling with validation
+- **Adaptive Streaming:** HTTP range requests for smooth playback
+- **Format Support:** MP4 and MKV files up to 2GB
+
+### 2. Content Intelligence (Sensitivity Analysis)
+- **Automated Screening:** Every uploaded video is analyzed for policy compliance
+- **Status Classification:** Videos marked as SAFE or FLAGGED
+- **Segment Detection:** Identifies specific timestamps of sensitive content
+- **Visual Warnings:** Clear alerts displayed for flagged material
+- **Confidence Scoring:** AI-powered analysis with confidence metrics
+
+### 3. Real-Time Updates
+- **Socket.io Integration:** Live upload progress and processing status
+- **Pipeline Tracking:** PENDING → PROCESSING → ANALYZED → READY/FLAGGED
+- **Instant Notifications:** Toast messages for completed uploads
+- **Live Analytics:** Dashboard metrics update in real-time
+
+### 4. Role-Based Access Control (RBAC)
+- **Multi-Tenant Architecture:** Complete data isolation per tenant
+- **Three Role Levels:**
+  - **Viewer:** Watch videos, add comments (read-only)
+  - **Editor:** Upload, manage own content, retry failed uploads
+  - **Admin:** Full access + analytics dashboard + user management
+- **JWT Authentication:** Secure token-based auth with expiration
+- **Permission Enforcement:** UI elements hidden based on role
+
+### 5. Analytics Dashboard (Admin Only)
+- **Storage Hub:** Visual progress bar showing usage vs 500MB limit
+- **Content Health:** Safety score with safe/flagged breakdown
+- **Total Watch Time:** Combined duration of all videos
+- **Video Library:** Total count with status indicators
 
 ---
 

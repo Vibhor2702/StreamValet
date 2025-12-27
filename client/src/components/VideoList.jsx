@@ -1,18 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Trash2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function VideoList({ videos, onDelete, loading }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this video?')) return;
     await api.delete(`/api/v1/videos/${id}`);
     if (onDelete) onDelete(id);
   };
+
+  // Check if user can delete (Admin or Editor only, not Viewer)
+  const canDelete = user && (user.role === 'admin' || user.role === 'editor');
 
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950">
@@ -67,14 +72,16 @@ export default function VideoList({ videos, onDelete, loading }) {
                   >
                     <Eye size={16} /> Watch
                   </button>
-                  <button
-                    className="btn bg-rose-700 text-white hover:bg-rose-600 flex items-center gap-2 font-bold border-2 border-rose-500 shadow-lg"
-                    style={{ minWidth: 90 }}
-                    title="Delete"
-                    onClick={() => handleDelete(video._id)}
-                  >
-                    <Trash2 size={18} /> Delete
-                  </button>
+                  {canDelete && (
+                    <button
+                      className="btn bg-rose-700 text-white hover:bg-rose-600 flex items-center gap-2 font-bold border-2 border-rose-500 shadow-lg"
+                      style={{ minWidth: 90 }}
+                      title="Delete"
+                      onClick={() => handleDelete(video._id)}
+                    >
+                      <Trash2 size={18} /> Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))

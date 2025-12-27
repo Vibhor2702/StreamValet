@@ -199,6 +199,7 @@ function Dashboard() {
   };
 
   const isAdmin = useMemo(() => user?.role === 'admin', [user]);
+  const canUpload = useMemo(() => user?.role === 'admin' || user?.role === 'editor', [user]);
 
   const handleDelete = (id) => {
     setVideos((prev) => prev.filter((v) => v._id !== id));
@@ -222,11 +223,13 @@ function Dashboard() {
       <main className="mx-auto max-w-6xl px-6 py-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Videos</h2>
-          <div className="flex gap-2">
-            <button className="btn bg-zinc-900 text-white" onClick={() => setShowUpload(true)}>
-              Upload
-            </button>
-          </div>
+          {canUpload && (
+            <div className="flex gap-2">
+              <button className="btn bg-zinc-900 text-white" onClick={() => setShowUpload(true)}>
+                Upload
+              </button>
+            </div>
+          )}
         </div>
 
         <VideoList videos={videos} onDelete={handleDelete} loading={loading} />
