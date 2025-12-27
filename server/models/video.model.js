@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const path = require('path');
 
 const { Schema, Types } = mongoose;
 
@@ -112,6 +113,15 @@ const VideoSchema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: function(doc, ret) {
+        // Convert absolute thumbnail path to just the filename for frontend
+        if (ret.thumbnailPath) {
+          ret.thumbnailPath = path.basename(ret.thumbnailPath);
+        }
+        return ret;
+      }
+    }
   }
 );
 

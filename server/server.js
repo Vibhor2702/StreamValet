@@ -20,8 +20,6 @@ async function bootstrap() {
   await seed({ ensureConnection: false });
 
   const server = http.createServer(app);
-  // Serve thumbnails statically (YouTube Studio style requirement)
-  app.use('/thumbnails', require('express').static(path.join(__dirname, 'thumbnails')));
 
   const io = new Server(server, {
     cors: {

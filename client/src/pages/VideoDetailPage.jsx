@@ -4,6 +4,8 @@ import api from '../services/api';
 import VideoPlayer from '../components/VideoPlayer';
 import CommentSidebar from '../components/CommentSidebar';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function VideoDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,8 +56,8 @@ export default function VideoDetailPage() {
         <button className="mb-4 text-zinc-400 hover:text-zinc-200" onClick={() => navigate(-1)}>&larr; Back to list</button>
         <VideoPlayer
           ref={playerRef}
-          src={`/api/v1/videos/stream/${video._id}`}
-          poster={video.thumbnailPath ? `/thumbnails/${video.thumbnailPath}` : '/placeholder.png'}
+          src={`${API_BASE}/api/v1/videos/stream/${video._id}`}
+          poster={video.thumbnailPath ? `${API_BASE}/thumbnails/${video.thumbnailPath}` : undefined}
           comments={comments}
           sensitivitySegments={video.sensitivitySegments}
           currentTime={currentTime}

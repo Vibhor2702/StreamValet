@@ -211,13 +211,20 @@ function AdminPanel() {
   }, []);
 
   if (!metrics) return null;
+  
+  // Safely calculate metrics with fallback values
+  const totalStorageMB = ((metrics.totalStorageBytes || 0) / (1024 * 1024)).toFixed(1);
+  const totalVideos = metrics.totalVideos || 0;
+  const safeCount = metrics.safeCount || 0;
+  const flaggedCount = metrics.flaggedCount || 0;
+  
   return (
     <div className="card p-4">
       <h3 className="text-base font-semibold">Admin Analytics</h3>
       <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Metric label="Total Storage" value={`${(metrics.totalStorageBytes / (1024 * 1024)).toFixed(1)} MB`} />
-        <Metric label="Total Videos" value={metrics.totalVideos} />
-        <Metric label="Sensitivity" value={`Safe ${metrics.safeCount} / Flagged ${metrics.flaggedCount}`} />
+        <Metric label="Total Storage" value={`${totalStorageMB} MB`} />
+        <Metric label="Total Videos" value={totalVideos} />
+        <Metric label="Sensitivity" value={`Safe ${safeCount} / Flagged ${flaggedCount}`} />
       </div>
     </div>
   );
