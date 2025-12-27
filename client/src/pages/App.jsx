@@ -89,6 +89,12 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [progressMap, setProgressMap] = useState({});
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, duration = 3000) => {
+    setToast(message);
+    setTimeout(() => setToast(null), duration);
+  };
 
   const loadVideos = async () => {
     setLoading(true);
@@ -115,6 +121,7 @@ function Dashboard() {
         delete next[payload.videoId];
         return next;
       });
+      showToast('Video Ready! Processing complete.');
       loadVideos();
     });
     socket.on('VIDEO_FAILED', (payload) => {
@@ -123,6 +130,7 @@ function Dashboard() {
         delete next[payload.videoId];
         return next;
       });
+      showToast('Video processing failed. Please try again.', 5000);
       loadVideos();
     });
     return () => {
@@ -133,11 +141,8 @@ function Dashboard() {
   }, [socket]);
 
   const onUpload = async ({ file, title, description }) => {
-    const form = new FormData();
-    form.append('video', file);
-    if (title) form.append('title', title);
-    if (description) form.append('description', description);
-    await api.post('/api/v1/videos/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    // This is called after upload completes in the modal
+    showToast('Upload Complete! Processing started...');
     await loadVideos();
   };
 
@@ -183,6 +188,12 @@ function Dashboard() {
       </main>
 
       <UploadModal open={showUpload} onClose={() => setShowUpload(false)} onUpload={onUpload} />
+      
+      {toast && (
+        <div className="fixed right-4 top-4 z-20 rounded-lg border border-blue-800 bg-blue-950 px-4 py-2 text-sm text-blue-200 shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

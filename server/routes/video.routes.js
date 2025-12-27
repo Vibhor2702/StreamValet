@@ -84,9 +84,16 @@ router.post(
 
     await video.save();
 
+    // Trigger async processing in background
     processVideo(video.id, req.app.get('io'));
 
-    res.status(201).json({ id: video.id, processingStatus: video.processingStatus });
+    // Return immediately with processing status
+    res.status(201).json({ 
+      id: video.id, 
+      status: 'processing',
+      processingStatus: video.processingStatus,
+      message: 'Upload complete! Video is being processed...'
+    });
   })
 );
 

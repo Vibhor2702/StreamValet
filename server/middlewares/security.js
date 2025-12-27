@@ -3,10 +3,19 @@ const mongoSanitize = require('express-mongo-sanitize');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 
-const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173').split(',');
 
 const corsOptions = {
-  origin: clientOrigin,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'DELETE', 'PATCH', 'PUT'],
   credentials: true,
 };
 

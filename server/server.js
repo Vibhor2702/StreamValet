@@ -31,6 +31,9 @@ async function bootstrap() {
 
   app.set('io', io);
 
+  // Set server timeout to 2 minutes for large uploads
+  server.setTimeout(120000);
+
   io.on('connection', (socket) => {
     // eslint-disable-next-line no-console
     console.log('Socket connected', socket.id);
