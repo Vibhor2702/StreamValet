@@ -15,6 +15,10 @@ const healthRoutes = require('./routes/health.routes');
 
 const app = express();
 
+// Enable trust proxy for Render (behind reverse proxy)
+app.set('trust proxy', 1);
+console.log('🔒 Trust proxy enabled for reverse proxy support');
+
 // PHASE 3: Ensure upload directories exist (Render-safe)
 const uploadDir = path.resolve(config.uploadsDir);
 const thumbnailDir = path.resolve(config.thumbnailsDir);

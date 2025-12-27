@@ -13,10 +13,44 @@ router.get(
   '/:videoId',
   auth,
   asyncHandler(async (req, res) => {
+    // Support both path param and query param for videoId
+    const videoId = req.params.videoId || req.query.videoId;
+    
+    console.log('💬 [COMMENTS] Fetching comments for video:', videoId);
+    
+    if (!videoId) {
+      return res.status(400).json({ message: 'videoId is required' });
+    }
+    
     const comments = await commentService.listComments({
       tenantId: req.user.tenantId,
-      videoId: req.params.videoId,
+      videoId: videoId,
     });
+    
+    console.log('✅ [COMMENTS] Found', comments.length, 'comments');
+    res.json(comments);
+  })
+);
+
+// Add route to handle query param style as well
+router.get(
+  '/',
+  auth,
+  asyncHandler(async (req, res) => {
+    const videoId = req.query.videoId;
+    
+    console.log('💬 [COMMENTS] Fetching comments (query param) for video:', videoId);
+    
+    if (!videoId) {
+      return res.status(400).json({ message: 'videoId query parameter is required' });
+    }
+    
+    const comments = await commentService.listComments({
+      tenantId: req.user.tenantId,
+      videoId: videoId,
+    });
+    
+    console.log('✅ [COMMENTS] Found', comments.length, 'comments');
     res.json(comments);
   })
 );
