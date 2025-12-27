@@ -43,9 +43,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint for uptime monitoring
-app.use('/', healthRoutes);
-
 app.disable('x-powered-by');
 app.use(helmetMiddleware);
 app.use(cors(corsOptions));
@@ -55,8 +52,12 @@ app.use(express.urlencoded({ limit: '500mb', extended: true }));
 app.use(sanitize);
 app.use(morgan('dev'));
 
+// CRITICAL: Static file serving MUST come before routes
 app.use('/thumbnails', express.static(path.resolve(config.thumbnailsDir)));
 app.use('/uploads', express.static(path.resolve(config.uploadsDir)));
+
+// Health check endpoint for uptime monitoring
+app.use('/', healthRoutes);
 
 // PHASE 1: Route Mounting Verification
 console.log('🔗 Mounting Video Routes at /api/v1/videos');

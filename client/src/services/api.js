@@ -5,6 +5,18 @@ const api = axios.create({
   // Ensure VITE_API_URL is set in Cloudflare Pages environment variables
 });
 
+// Add token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (err) => Promise.reject(err)
+);
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {

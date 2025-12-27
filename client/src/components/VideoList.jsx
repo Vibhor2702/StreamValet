@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Trash2 } from 'lucide-react';
 import api from '../services/api';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function VideoList({ videos, onDelete, loading }) {
   const navigate = useNavigate();
 
@@ -33,7 +35,7 @@ export default function VideoList({ videos, onDelete, loading }) {
               <tr key={video._id} className="bg-zinc-900 border-b border-zinc-800 hover:bg-zinc-800 transition">
                 <td className="flex items-center gap-3 px-4 py-3">
                   <img
-                    src={video.thumbnailPath ? `/thumbnails/${video.thumbnailPath}` : '/placeholder.png'}
+                    src={video.thumbnailPath ? `${API_BASE}/thumbnails/${video.thumbnailPath}` : 'https://via.placeholder.com/160x90'}
                     alt={video.title}
                     className="w-32 h-20 object-cover rounded"
                   />

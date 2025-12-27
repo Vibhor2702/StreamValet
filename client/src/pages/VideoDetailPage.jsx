@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import VideoPlayer from '../components/VideoPlayer';
 import CommentSidebar from '../components/CommentSidebar';
@@ -9,6 +10,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 export default function VideoDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [video, setVideo] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +58,7 @@ export default function VideoDetailPage() {
         <button className="mb-4 text-zinc-400 hover:text-zinc-200" onClick={() => navigate(-1)}>&larr; Back to list</button>
         <VideoPlayer
           ref={playerRef}
-          src={`${API_BASE}/api/v1/videos/stream/${video._id}`}
+          src={`${API_BASE}/api/v1/videos/stream/${video._id}?token=${encodeURIComponent(token)}`}
           poster={video.thumbnailPath ? `${API_BASE}/thumbnails/${video.thumbnailPath}` : undefined}
           comments={comments}
           sensitivitySegments={video.sensitivitySegments}
