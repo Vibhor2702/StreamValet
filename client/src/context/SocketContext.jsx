@@ -8,7 +8,7 @@ export function SocketProvider({ children }) {
   const { token } = useAuth();
   const [socket, setSocket] = useState(null);
 
-  const socketUrl = useMemo(() => import.meta.env.VITE_API_URL, []);
+  const socketUrl = useMemo(() => import.meta.env.VITE_API_URL || '', []);
 
   useEffect(() => {
     if (!token) {

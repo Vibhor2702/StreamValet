@@ -19,6 +19,10 @@ function UploadModal({ open, onClose, onUpload }) {
       setError('Select a file');
       return;
     }
+    
+    console.log('📤 [FRONTEND] Starting upload...');
+    console.log('📁 [FRONTEND] File:', file.name, '|', (file.size / (1024 * 1024)).toFixed(2), 'MB');
+    
     setLoading(true);
     try {
       const form = new FormData();
@@ -26,14 +30,21 @@ function UploadModal({ open, onClose, onUpload }) {
       if (title) form.append('title', title);
       if (description) form.append('description', description);
 
+      const uploadUrl = `${import.meta.env.VITE_API_URL || ''}/api/v1/videos/upload`;
+      console.log('🌐 [FRONTEND] Attempting Upload to:', uploadUrl);
+      console.log('🔑 [FRONTEND] API Base URL:', import.meta.env.VITE_API_URL || 'NOT SET');
+
       // Upload with progress tracking
-      await api.post('/api/v1/videos/upload', form, {
+      const response = await api.post('/api/v1/videos/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
+          console.log('📊 [FRONTEND] Upload Progress:', percentCompleted + '%');
         },
       });
+
+      console.log('✅ [FRONTEND] Upload Success!', response.data);
 
       // Close modal and reset
       onClose();
@@ -47,6 +58,9 @@ function UploadModal({ open, onClose, onUpload }) {
         await onUpload({ file, title, description });
       }
     } catch (err) {
+      console.error('❌ [FRONTEND] Upload Failed:', err);
+      console.error('❌ [FRONTEND] Error Response:', err.response?.data);
+      console.error('❌ [FRONTEND] Error Status:', err.response?.status);
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);

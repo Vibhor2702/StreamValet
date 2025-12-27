@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-const API_BASE = import.meta.env.VITE_API_URL;
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import VideoPlayer from './VideoPlayer';
 import CommentSidebar from './CommentSidebar';
 import api from '../services/api';
 import { useSocket } from '../context/SocketContext';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 function VideoCard({ video, onRetry, progress, token }) {
   const { socket } = useSocket();

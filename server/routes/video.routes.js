@@ -58,19 +58,33 @@ router.post(
   checkRole(['admin', 'editor']),
   upload.single('video'),
   asyncHandler(async (req, res) => {
+    console.log('🎬 [UPLOAD] Step 1: Hit Upload Controller');
+    console.log('🎬 [UPLOAD] User:', req.user?.email, '| Role:', req.user?.role);
+    console.log('🎬 [UPLOAD] Tenant:', req.user?.tenantId);
+    
     if (!req.file) {
+      console.error('❌ [UPLOAD] Step 2: No File Received from Multer');
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    console.log('✅ [UPLOAD] Step 2: File Received');
+    console.log('📁 [UPLOAD] Filename:', req.file.filename);
+    console.log('📏 [UPLOAD] Size:', (req.file.size / (1024 * 1024)).toFixed(2), 'MB');
+    console.log('📝 [UPLOAD] Original Name:', req.file.originalname);
+    console.log('🗂️ [UPLOAD] Path:', req.file.path);
+
     if (req.body.title && req.body.title.length > 200) {
+      console.error('❌ [UPLOAD] Title too long');
       cleanupFile(req.file.path);
       return res.status(400).json({ message: 'Title too long (max 200)' });
     }
     if (req.body.description && req.body.description.length > 1000) {
+      console.error('❌ [UPLOAD] Description too long');
       cleanupFile(req.file.path);
       return res.status(400).json({ message: 'Description too long (max 1000)' });
     }
 
+    console.log('🎬 [UPLOAD] Step 3: Creating Video Document...');
     const video = new Video({
       tenantId: req.user.tenantId,
       owner: req.user.id,
@@ -82,12 +96,25 @@ router.post(
       size: req.file.size,
     });
 
-    await video.save();
+    try {
+      console.log('💾 [UPLOAD] Step 4: Attempting DB Save...');
+      await video.save();
+      console.log('✅ [UPLOAD] Step 5: DB Save Success!');
+      console.log('🆔 [UPLOAD] Video ID:', video._id);
+      console.log('📊 [UPLOAD] Processing Status:', video.processingStatus);
+    } catch (error) {
+      console.error('❌ [UPLOAD] DB Save Failed:', error.message);
+      console.error('🔍 [UPLOAD] Full Error:', error);
+      cleanupFile(req.file.path);
+      return res.status(500).json({ message: 'Database save failed', error: error.message });
+    }
 
     // Trigger async processing in background
+    console.log('⚙️ [UPLOAD] Step 6: Triggering Background Processing...');
     processVideo(video.id, req.app.get('io'));
 
     // Return immediately with processing status
+    console.log('✅ [UPLOAD] Step 7: Sending Success Response');
     res.status(201).json({ 
       id: video.id, 
       status: 'processing',
