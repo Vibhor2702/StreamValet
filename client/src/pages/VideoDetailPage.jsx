@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import VideoPlayer from '../components/VideoPlayer';
 import CommentSidebar from '../components/CommentSidebar';
+import { AlertTriangle } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -56,6 +57,25 @@ export default function VideoDetailPage() {
       {/* Left: Video Player and Info */}
       <div className="flex-1 max-w-3xl">
         <button className="mb-4 text-zinc-400 hover:text-zinc-200" onClick={() => navigate(-1)}>&larr; Back to list</button>
+        
+        {/* Sensitivity Warning */}
+        {video.sensitivityStatus === 'FLAGGED' && (
+          <div className="bg-red-950/30 border border-red-500/30 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-red-200 font-semibold mb-1">Content Warning: Flagged Material</h3>
+              <p className="text-red-400 text-sm">
+                Automated analysis detected potential policy violations. Viewer discretion is advised.
+              </p>
+              {video.sensitivityReason && (
+                <p className="text-red-400/80 text-xs mt-2">
+                  Reason: {video.sensitivityReason}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+        
         <VideoPlayer
           ref={playerRef}
           src={`${API_BASE}/api/v1/videos/stream/${video._id}?token=${encodeURIComponent(token)}`}

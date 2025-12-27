@@ -11,6 +11,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import VideoDetailPage from './VideoDetailPage';
+import { MonitorPlay } from 'lucide-react';
 
 function LoginScreen() {
   const { login } = useAuth();
@@ -48,32 +49,78 @@ function LoginScreen() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="card w-full max-w-md p-6">
-        <h1 className="text-xl font-semibold">StreamValet</h1>
-        <p className="text-sm text-slate-600">Sign in to manage videos</p>
-        <div className="mt-4 space-y-3">
-          <input className="w-full rounded border px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-          <input className="w-full rounded border px-3 py-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-          <input className="w-full rounded border px-3 py-2" value={tenant} onChange={(e) => setTenant(e.target.value)} placeholder="Tenant" />
-          {error && <p className="text-sm text-rose-600">{error}</p>}
-          <button className="btn w-full justify-center bg-slate-900 text-white" onClick={() => submit()} disabled={loading}>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-8">
+        {/* Header with Icon */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mb-4">
+            <MonitorPlay className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white">StreamValet</h1>
+          <p className="text-zinc-400 text-sm mt-1">Enterprise Video Management</p>
+        </div>
+
+        {/* Login Form */}
+        <div className="space-y-4">
+          <input 
+            className="bg-zinc-950 border-zinc-700 text-white rounded-lg p-3 w-full border focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-zinc-500" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            placeholder="Email" 
+            disabled={loading}
+          />
+          <input 
+            className="bg-zinc-950 border-zinc-700 text-white rounded-lg p-3 w-full border focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-zinc-500" 
+            type="password" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            placeholder="Password" 
+            disabled={loading}
+          />
+          <input 
+            className="bg-zinc-950 border-zinc-700 text-white rounded-lg p-3 w-full border focus:outline-none focus:ring-2 focus:ring-red-500 placeholder-zinc-500" 
+            value={tenant} 
+            onChange={(e) => setTenant(e.target.value)} 
+            placeholder="Tenant ID" 
+            disabled={loading}
+          />
+          
+          {error && <p className="text-sm text-rose-400">{error}</p>}
+          
+          <button 
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+            onClick={() => submit()} 
+            disabled={loading}
+          >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </div>
 
-        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-semibold text-slate-700">Demo Access</p>
-          <p className="text-xs text-slate-600">One-click logins for evaluators.</p>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <button className="btn bg-slate-100 text-slate-800" onClick={() => quickLogin('admin')} disabled={loading}>
-              Login as Admin
+        {/* Demo Access Section */}
+        <div className="mt-8 pt-6 border-t border-zinc-800">
+          <p className="text-sm font-semibold text-zinc-300 mb-2">Demo Access</p>
+          <p className="text-xs text-zinc-500 mb-4">Quick login for evaluators</p>
+          <div className="grid grid-cols-3 gap-2">
+            <button 
+              className="border border-zinc-700 hover:bg-zinc-800 text-zinc-300 text-xs py-2 rounded transition-colors disabled:opacity-50" 
+              onClick={() => quickLogin('admin')} 
+              disabled={loading}
+            >
+              Admin
             </button>
-            <button className="btn bg-slate-100 text-slate-800" onClick={() => quickLogin('editor')} disabled={loading}>
-              Login as Editor
+            <button 
+              className="border border-zinc-700 hover:bg-zinc-800 text-zinc-300 text-xs py-2 rounded transition-colors disabled:opacity-50" 
+              onClick={() => quickLogin('editor')} 
+              disabled={loading}
+            >
+              Editor
             </button>
-            <button className="btn bg-slate-100 text-slate-800" onClick={() => quickLogin('viewer')} disabled={loading}>
-              Login as Viewer
+            <button 
+              className="border border-zinc-700 hover:bg-zinc-800 text-zinc-300 text-xs py-2 rounded transition-colors disabled:opacity-50" 
+              onClick={() => quickLogin('viewer')} 
+              disabled={loading}
+            >
+              Viewer
             </button>
           </div>
         </div>
