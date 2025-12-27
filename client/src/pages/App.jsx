@@ -200,41 +200,102 @@ function Dashboard() {
 
 function AdminPanel() {
   const [metrics, setMetrics] = useState(null);
+  const [videos, setVideos] = useState([]);
 
-  const loadMetrics = async () => {
-    const { data } = await api.get('/api/v1/admin/metrics');
-    setMetrics(data);
+  const loadData = async () => {
+    try {
+      const [metricsRes, videosRes] = await Promise.all([
+        api.get('/api/v1/admin/metrics'),
+        api.get('/api/v1/videos')
+      ]);
+      setMetrics(metricsRes.data);
+      setVideos(videosRes.data);
+    } catch (err) {
+      console.error('Failed to load analytics:', err);
+    }
   };
 
   useEffect(() => {
-    loadMetrics();
+    loadData();
   }, []);
 
   if (!metrics) return null;
   
-  // Safely calculate metrics with fallback values
-  const totalStorageMB = ((metrics.totalStorageBytes || 0) / (1024 * 1024)).toFixed(1);
-  const totalVideos = metrics.totalVideos || 0;
-  const safeCount = metrics.safeCount || 0;
-  const flaggedCount = metrics.flaggedCount || 0;
+  // Calculate stats from actual video data
+  const totalStorageBytes = videos.reduce((sum, v) => sum + (Number(v.size) || 0), 0);
+  const totalStorageMB = (totalStorageBytes / (1024 * 1024)).toFixed(1);
+  const totalVideos = videos.length;
+  const safeCount = videos.filter(v => v.sensitivityStatus === 'SAFE').length;
+  const flaggedCount = videos.filter(v => v.sensitivityStatus === 'FLAGGED').length;
+  const totalWatchTime = videos.reduce((sum, v) => sum + (Number(v.durationSeconds) || 0), 0);
+  const safetyScore = totalVideos > 0 ? Math.round((safeCount / totalVideos) * 100) : 100;
+  
+  // Free tier limit (500MB)
+  const storageLimitMB = 500;
+  const storageUsagePercent = Math.min((totalStorageBytes / (storageLimitMB * 1024 * 1024)) * 100, 100);
   
   return (
-    <div className="card p-4">
-      <h3 className="text-base font-semibold">Admin Analytics</h3>
-      <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Metric label="Total Storage" value={`${totalStorageMB} MB`} />
-        <Metric label="Total Videos" value={totalVideos} />
-        <Metric label="Sensitivity" value={`Safe ${safeCount} / Flagged ${flaggedCount}`} />
-      </div>
-    </div>
-  );
-}
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-zinc-200">Analytics Dashboard</h3>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Storage Hub Card */}
+        <div className="rounded-lg border border-cyan-800/50 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">Storage Hub</p>
+            <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-zinc-100 mb-1">{totalStorageMB} MB</p>
+          <p className="text-xs text-zinc-400 mb-3">of {storageLimitMB} MB used</p>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+            <div 
+              className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-500"
+              style={{ width: `${storageUsagePercent}%` }}
+            />
+          </div>
+        </div>
 
-function Metric({ label, value }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="text-lg font-semibold text-slate-900">{value}</p>
+        {/* Content Health Card */}
+        <div className="rounded-lg border border-purple-800/50 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-purple-400">Content Health</p>
+            <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-zinc-100 mb-1">{safetyScore}% Safe</p>
+          <p className="text-xs text-zinc-400">
+            {safeCount} safe · {flaggedCount} flagged
+          </p>
+        </div>
+
+        {/* Engagement Card */}
+        <div className="rounded-lg border border-green-800/50 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-green-400">Total Watch Time</p>
+            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-zinc-100 mb-1">
+            {totalWatchTime < 60 ? `${totalWatchTime.toFixed(0)}s` : `${(totalWatchTime / 60).toFixed(1)}m`}
+          </p>
+          <p className="text-xs text-zinc-400">Combined duration</p>
+        </div>
+
+        {/* Library Card */}
+        <div className="rounded-lg border border-orange-800/50 bg-gradient-to-br from-zinc-900 to-zinc-950 p-4 shadow-lg">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-orange-400">Video Library</p>
+            <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+            </svg>
+          </div>
+          <p className="text-2xl font-bold text-zinc-100 mb-1">{totalVideos}</p>
+          <p className="text-xs text-zinc-400">Total videos</p>
+        </div>
+      </div>
     </div>
   );
 }

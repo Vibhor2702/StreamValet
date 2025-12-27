@@ -16,6 +16,7 @@ async function seed({ ensureConnection = true } = {}) {
   initStorage();
 
   const demoDir = path.resolve(__dirname, '..', '..', 'demo_assets');
+  const permanentDemoPath = path.join(demoDir, 'permanent_demo.mp4');
 
   const tenantId = 'pulsegen';
   const seeds = [
@@ -48,169 +49,92 @@ async function seed({ ensureConnection = true } = {}) {
   const editor = await User.findOne({ email: 'editor@pulsegen.io', tenantId });
   const viewer = await User.findOne({ email: 'viewer@pulsegen.io', tenantId });
 
-  const sampleVideos = [
-    {
-      title: 'Demo Collaboration 1',
-      owner: editor?._id || admin?._id,
-      originalFilename: 'demo-collab-1.mp4',
-      storageFilename: 'demo-collab-1.mp4',
-      durationSeconds: 45,
-      sensitivitySegments: [{ start: 10, end: 15, reason: 'Simulated sensitive segment' }],
-      sensitivityStatus: Video.SENSITIVITY_STATUS.FLAGGED,
-      sensitivityReason: 'Simulated sensitive segment',
-    },
-    {
-      title: 'Demo Collaboration 2',
-      owner: viewer?._id || editor?._id,
-      originalFilename: 'demo-collab-2.mp4',
-      storageFilename: 'demo-collab-2.mp4',
-      durationSeconds: 28,
-      sensitivitySegments: [],
-      sensitivityStatus: Video.SENSITIVITY_STATUS.SAFE,
-      sensitivityReason: 'Clean sample video',
-    },
-  ];
+  // TASK 1: Cleanup old "Demo Collaboration" entries
+  const deleteResult = await Video.deleteMany({ title: { $regex: /Demo Collaboration/i } });
+  if (deleteResult.deletedCount > 0) {
+    // eslint-disable-next-line no-console
+    console.log(`🗑️  Cleaned up ${deleteResult.deletedCount} old "Demo Collaboration" entries`);
+  }
 
-  for (const sample of sampleVideos) {
-    if (!sample.owner) continue;
-    const existingVideo = await Video.findOne({ title: sample.title, tenantId });
-    if (existingVideo) {
+  // TASK 1: Ensure "StreamValet Demo" permanent video exists
+  let permanentDemo = await Video.findOne({ title: 'StreamValet Demo', tenantId });
+  
+  if (!permanentDemo && fs.existsSync(permanentDemoPath)) {
+    // eslint-disable-next-line no-console
+    console.log('📹 Creating permanent demo video: "StreamValet Demo"');
+    
+    const targetFilename = 'streamvalet-demo.mp4';
+    const targetPath = buildUploadPath(targetFilename);
+    
+    // Copy the permanent demo file to uploads
+    fs.copyFileSync(permanentDemoPath, targetPath);
+    const stats = fs.statSync(targetPath);
+
+    let metadata = { durationSeconds: 60, resolution: { width: 1920, height: 1080 } };
+    try {
+      metadata = await getMetadata(targetPath);
+    } catch (err) {
       // eslint-disable-next-line no-console
-      console.log(`Video already exists: ${sample.title}`);
-      continue;
+      console.warn('FFprobe failed for permanent demo, using defaults:', err.message);
     }
 
-    const uploadPath = buildUploadPath(sample.storageFilename);
-    if (!fs.existsSync(uploadPath)) {
-      fs.writeFileSync(uploadPath, 'Placeholder content for demo video');
-    }
-
-    const video = new Video({
+    permanentDemo = new Video({
       tenantId,
-      owner: sample.owner,
-      title: sample.title,
-      description: 'Sample video for collaboration demo',
-      originalFilename: sample.originalFilename,
-      storagePath: uploadPath,
+      owner: admin?._id || editor?._id,
+      title: 'StreamValet Demo',
+      description: 'Professional video collaboration platform showcase',
+      originalFilename: 'permanent_demo.mp4',
+      storagePath: targetPath,
       mimeType: 'video/mp4',
-      size: Math.max(1024, fs.statSync(uploadPath).size || 0) || 1024,
-      durationSeconds: sample.durationSeconds,
-      resolution: { width: 1280, height: 720 },
+      size: stats.size,
+      durationSeconds: metadata.durationSeconds || 60,
+      resolution: metadata.resolution,
       processingStatus: Video.PROCESSING_STATUS.READY,
-      sensitivityStatus: sample.sensitivityStatus,
-      sensitivityConfidence: sample.sensitivityStatus === Video.SENSITIVITY_STATUS.FLAGGED ? 90 : 15,
-      sensitivityReason: sample.sensitivityReason,
-      sensitivitySegments: sample.sensitivitySegments,
+      sensitivityStatus: Video.SENSITIVITY_STATUS.SAFE,
+      sensitivityConfidence: 100,
+      sensitivityReason: 'Professional demo content',
     });
 
-    await video.save();
-    // eslint-disable-next-line no-console
-    console.log(`Created sample video: ${sample.title}`);
-  }
-
-
-  async function ingestDemoAssets({ demoDir, tenantId, owner }) {
-    if (!owner) return;
-    if (!fs.existsSync(demoDir)) return;
-
-    const files = fs.readdirSync(demoDir).filter((f) => f.toLowerCase().endsWith('.mp4'));
-    if (!files.length) return;
-
-    // eslint-disable-next-line no-console
-    console.log(`Found ${files.length} demo asset(s), importing...`);
-
-    for (const filename of files) {
-      const sourcePath = path.join(demoDir, filename);
-      const baseName = filename.replace(/\.[^/.]+$/, '');
-
-      const existing = await Video.findOne({ tenantId, originalFilename: filename });
-      if (existing) {
-        // eslint-disable-next-line no-console
-        console.log(`Skipping existing demo asset: ${filename}`);
-        continue;
-      }
-
-      let targetName = filename;
-      let targetPath = buildUploadPath(targetName);
-      let attempt = 1;
-      while (fs.existsSync(targetPath)) {
-        targetName = `${baseName}-${attempt}.mp4`;
-        targetPath = buildUploadPath(targetName);
-        attempt += 1;
-      }
-
-      fs.copyFileSync(sourcePath, targetPath);
-      const stats = fs.statSync(targetPath);
-
-      let metadata = { durationSeconds: 60, resolution: undefined };
-      try {
-        metadata = await getMetadata(targetPath);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(`FFprobe failed for ${filename}, using defaults:`, err.message);
-      }
-
-      const video = new Video({
-        tenantId,
-        owner: owner._id,
-        title: baseName,
-        description: 'Demo asset imported automatically',
-        originalFilename: filename,
-        storagePath: targetPath,
-        mimeType: 'video/mp4',
-        size: Math.max(1024, stats.size || 1024),
-        durationSeconds: metadata.durationSeconds || 60,
-        resolution: metadata.resolution,
-        processingStatus: Video.PROCESSING_STATUS.READY,
-        sensitivityStatus: Video.SENSITIVITY_STATUS.SAFE,
-        sensitivityConfidence: 90,
-      });
-
-      const thumbName = `${video._id}-thumb.jpg`;
-      const thumbPath = buildThumbnailPath(thumbName);
-      if (!fs.existsSync(path.dirname(thumbPath))) {
-        fs.mkdirSync(path.dirname(thumbPath), { recursive: true });
-      }
-      if (!fs.existsSync(thumbPath)) {
-        fs.writeFileSync(thumbPath, 'Demo thumbnail placeholder');
-      }
-      video.thumbnailPath = thumbPath;
-
-      await video.save();
-      // eslint-disable-next-line no-console
-      console.log(`Imported demo video: ${filename}`);
+    // Create thumbnail
+    const thumbName = `${permanentDemo._id}-thumb.jpg`;
+    const thumbPath = buildThumbnailPath(thumbName);
+    if (!fs.existsSync(path.dirname(thumbPath))) {
+      fs.mkdirSync(path.dirname(thumbPath), { recursive: true });
     }
+    if (!fs.existsSync(thumbPath)) {
+      fs.writeFileSync(thumbPath, 'Demo thumbnail placeholder');
+    }
+    permanentDemo.thumbnailPath = thumbPath;
+
+    await permanentDemo.save();
+    // eslint-disable-next-line no-console
+    console.log('✅ Created permanent demo video: "StreamValet Demo"');
+  } else if (permanentDemo) {
+    // eslint-disable-next-line no-console
+    console.log('✅ Permanent demo video already exists: "StreamValet Demo"');
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn('⚠️  Permanent demo file not found at:', permanentDemoPath);
   }
 
-  await ingestDemoAssets({ demoDir, tenantId, owner: editor || admin });
-
-  const videos = await Video.find({ tenantId }).sort({ createdAt: -1 }).limit(2);
-  const [firstVideo, secondVideo] = videos;
-
-  if (firstVideo && secondVideo) {
-    await Comment.deleteMany({ videoId: { $in: [firstVideo._id, secondVideo._id] } });
+  // Add demo comments to the permanent demo video
+  if (permanentDemo) {
+    await Comment.deleteMany({ videoId: permanentDemo._id });
 
     const commentSeeds = [
       {
         tenantId,
-        videoId: firstVideo._id,
+        videoId: permanentDemo._id,
         userId: admin?._id,
         text: 'Kickoff: let us align on intro pacing.',
         timestamp: 4,
       },
       {
         tenantId,
-        videoId: firstVideo._id,
+        videoId: permanentDemo._id,
         userId: editor?._id,
         text: 'Need b-roll swap between 10s-15s (sensitivity flag).',
         timestamp: 11,
-      },
-      {
-        tenantId,
-        videoId: secondVideo._id,
-        userId: viewer?._id,
-        text: 'Looks clean. Add lower-third branding?',
-        timestamp: 6,
       },
     ].filter((c) => c.userId);
 
