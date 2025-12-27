@@ -16,7 +16,6 @@ async function seed({ ensureConnection = true } = {}) {
   initStorage();
 
   const demoDir = path.resolve(__dirname, '..', '..', 'demo_assets');
-  const permanentDemoPath = path.join(demoDir, 'permanent_demo.mp4');
 
   const tenantId = 'pulsegen';
   const seeds = [
@@ -59,9 +58,15 @@ async function seed({ ensureConnection = true } = {}) {
   // TASK 1: Ensure "StreamValet Demo" permanent video exists
   let permanentDemo = await Video.findOne({ title: 'StreamValet Demo', tenantId });
   
-  if (!permanentDemo && fs.existsSync(permanentDemoPath)) {
-    // eslint-disable-next-line no-console
-    console.log('📹 Creating permanent demo video: "StreamValet Demo"');
+  if (!permanentDemo && fs.existsSync(demoDir)) {
+    // Look for any .mp4 file in demo_assets (handles permanent_demo.mp4 or permanent_demo.mp4.mp4)
+    const demoFiles = fs.readdirSync(demoDir).filter(f => f.toLowerCase().endsWith('.mp4'));
+    const permanentDemoFile = demoFiles.find(f => f.toLowerCase().includes('permanent')) || demoFiles[0];
+    
+    if (permanentDemoFile) {
+      const permanentDemoPath = path.join(demoDir, permanentDemoFile);
+      // eslint-disable-next-line no-console
+      console.log(`📹 Creating permanent demo video: "StreamValet Demo" from ${permanentDemoFile}`);
     
     const targetFilename = 'streamvalet-demo.mp4';
     const targetPath = buildUploadPath(targetFilename);
@@ -83,7 +88,7 @@ async function seed({ ensureConnection = true } = {}) {
       owner: admin?._id || editor?._id,
       title: 'StreamValet Demo',
       description: 'Professional video collaboration platform showcase',
-      originalFilename: 'permanent_demo.mp4',
+      originalFilename: permanentDemoFile,
       storagePath: targetPath,
       mimeType: 'video/mp4',
       size: stats.size,
@@ -109,12 +114,13 @@ async function seed({ ensureConnection = true } = {}) {
     await permanentDemo.save();
     // eslint-disable-next-line no-console
     console.log('✅ Created permanent demo video: "StreamValet Demo"');
+    } else {
+      // eslint-disable-next-line no-console
+      console.warn('⚠️  No demo video file found in:', demoDir);
+    }
   } else if (permanentDemo) {
     // eslint-disable-next-line no-console
     console.log('✅ Permanent demo video already exists: "StreamValet Demo"');
-  } else {
-    // eslint-disable-next-line no-console
-    console.warn('⚠️  Permanent demo file not found at:', permanentDemoPath);
   }
 
   // Add demo comments to the permanent demo video
