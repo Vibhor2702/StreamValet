@@ -121,6 +121,33 @@ async function seed({ ensureConnection = true } = {}) {
       permanentDemo.sensitivityConfidence = 100;
       permanentDemo.sensitivityReason = 'Professional demo content';
       
+      // Generate thumbnail using ffmpeg
+      const thumbName = `${permanentDemo._id}-thumb.jpg`;
+      const thumbPath = buildThumbnailPath(thumbName);
+      if (!fs.existsSync(path.dirname(thumbPath))) {
+        fs.mkdirSync(path.dirname(thumbPath), { recursive: true });
+      }
+      
+      try {
+        const ffmpeg = require('fluent-ffmpeg');
+        await new Promise((resolve, reject) => {
+          ffmpeg(targetPath)
+            .on('error', reject)
+            .on('end', resolve)
+            .screenshots({
+              timestamps: ['1'],
+              filename: thumbName,
+              folder: path.dirname(thumbPath),
+            });
+        });
+        permanentDemo.thumbnailPath = thumbPath;
+        // eslint-disable-next-line no-console
+        console.log('✅ Generated thumbnail for permanent demo');
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('⚠️  Failed to generate thumbnail:', err.message);
+      }
+      
       await permanentDemo.save();
       // eslint-disable-next-line no-console
       console.log('✅ Updated permanent demo video: "StreamValet Demo"');
@@ -143,18 +170,36 @@ async function seed({ ensureConnection = true } = {}) {
         sensitivityReason: 'Professional demo content',
       });
 
-      // Create thumbnail
+      await permanentDemo.save();
+
+      // Generate thumbnail using ffmpeg
       const thumbName = `${permanentDemo._id}-thumb.jpg`;
       const thumbPath = buildThumbnailPath(thumbName);
       if (!fs.existsSync(path.dirname(thumbPath))) {
         fs.mkdirSync(path.dirname(thumbPath), { recursive: true });
       }
-      if (!fs.existsSync(thumbPath)) {
-        fs.writeFileSync(thumbPath, 'Demo thumbnail placeholder');
+      
+      try {
+        const ffmpeg = require('fluent-ffmpeg');
+        await new Promise((resolve, reject) => {
+          ffmpeg(targetPath)
+            .on('error', reject)
+            .on('end', resolve)
+            .screenshots({
+              timestamps: ['1'],
+              filename: thumbName,
+              folder: path.dirname(thumbPath),
+            });
+        });
+        permanentDemo.thumbnailPath = thumbPath;
+        await permanentDemo.save();
+        // eslint-disable-next-line no-console
+        console.log('✅ Generated thumbnail for permanent demo');
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('⚠️  Failed to generate thumbnail:', err.message);
       }
-      permanentDemo.thumbnailPath = thumbPath;
 
-      await permanentDemo.save();
       // eslint-disable-next-line no-console
       console.log('✅ Created permanent demo video: "StreamValet Demo"');
     }
