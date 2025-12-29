@@ -11,11 +11,17 @@ WORKDIR /app
 COPY server/package*.json ./server/
 RUN cd server && npm install
 
-# Copy server source code
-COPY server ./server
+COPY client/package*.json ./client/
+RUN cd client && npm install
+
+# CRITICAL: Copy source code AND assets
+COPY . .
+
+# Explicitly ensure demo assets are preserved if they weren't caught by "COPY . ."
+COPY demo_assets ./demo_assets
 
 # Expose backend port
 EXPOSE 4000
 
 # Start the server
-CMD ["npm", "start", "--prefix", "server"]
+CMD ["npm", "start"]
