@@ -24,4 +24,4 @@ COPY demo_assets ./demo_assets
 EXPOSE 4000
 
 # Start the server
-CMD ["npm", "start"]
+CMD ["npm", "start", "--prefix", "server"]
