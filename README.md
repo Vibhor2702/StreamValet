@@ -15,8 +15,9 @@ Thank you for taking the time to review StreamValet—a production-grade B2B vid
 - ✅ **Responsive Dark Mode UI** built with React + Tailwind
 
 ## 🚀 Quick Demo Access
-
-**No setup required!**
+> **Note:** This application uses a Render free-tier backend, which may occasionally cold start. If the login page feels slow, please wake the backend by visiting:
+>
+> https://streamvalet.onrender.com/health
 
 1. Visit the deployed app: [https://streamvalet.pages.dev](https://streamvalet.pages.dev)
 2. Use the one-click login buttons (Admin, Editor, Viewer) for instant access to demo accounts:
